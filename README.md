@@ -128,8 +128,12 @@ le calcul nécessaire pour l'alimenter.
   la navigation échoue faute de réseau. Ne met **jamais** en cache les pages HTML ni les
   appels Firebase/Cloudinary : l'app est trop dynamique (temps réel) pour ça.
 - **`public/manifest.json`** + **`public/icons/icon.svg`** — installabilité PWA (icône
-  provisoire "CP" en SVG ; à remplacer par le vrai logo si besoin — l'ajout d'un PNG
-  `apple-touch-icon` améliorerait aussi le rendu sur iOS, qui ignore les icônes SVG).
+  provisoire "CP" en SVG, à remplacer par le vrai logo si besoin).
+- **`public/icons/apple-touch-icon.png`** (180×180, généré depuis
+  `public/icons/icon-apple.svg`) — icône "Ajouter à l'écran d'accueil" sur iOS, qui
+  ignore les icônes SVG et le manifest. Fond plein, sans coins arrondis ni transparence
+  (iOS applique lui-même le masque). Si l'icône "CP" provisoire est remplacée par le
+  vrai logo, régénérer ce PNG à partir du nouveau design.
 - **`components/ServiceWorkerRegistration.tsx`** — enregistre le service worker
   uniquement en production (jamais en `next dev`, pour ne pas gêner le hot-reload).
 - **Bump de version** : après un déploiement qui change les assets mis en cache,
