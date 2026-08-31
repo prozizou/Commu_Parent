@@ -44,7 +44,11 @@ export async function POST(req: NextRequest) {
 
     await adminAuth.setCustomUserClaims(userRecord.uid, { parentId: idUnique });
 
-    const slug = nom.toLowerCase().replace(/\s+/g, ".");
+    const slug = nom
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // retire les accents
+      .replace(/[^a-z0-9]+/g, "."); // ne garde que lettres/chiffres, "." comme séparateur
     const compteurMatch = idUnique.match(/(\d{4})$/);
     const compteurStr = compteurMatch ? compteurMatch[1] : "0000";
 

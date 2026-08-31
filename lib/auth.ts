@@ -19,12 +19,22 @@ export function idToInternalEmail(idUnique: string) {
  * L'ID est d'abord vérifié dans /parents avant de tenter le login Firebase Auth,
  * pour renvoyer un message clair si l'ID n'existe pas.
  */
+// Un ID valide ressemble à PAR-2026-0001 : lettres/chiffres/tirets uniquement,
+// jamais de "." "#" "$" "[" "]" (interdits dans les clés Firebase RTDB).
+const ID_UNIQUE_REGEX = /^[A-Za-z0-9-]+$/;
+
 export async function loginParent(idUnique: string, password: string) {
-  const snap = await get(ref(rtdb, `parents/${idUnique}`));
+  const idPropre = idUnique.trim();
+  if (!ID_UNIQUE_REGEX.test(idPropre)) {
+    throw new Error(
+      "Format d'ID invalide. Utilisez l'identifiant fourni par l'école (ex: PAR-2026-0001), pas une adresse email."
+    );
+  }
+  const snap = await get(ref(rtdb, `parents/${idPropre}`));
   if (!snap.exists()) {
     throw new Error("ID parent introuvable. Vérifiez le code fourni par l'école.");
   }
-  const email = idToInternalEmail(idUnique);
+  const email = idToInternalEmail(idPropre);
   const cred = await signInWithEmailAndPassword(auth, email, password);
   return { user: cred.user, parent: snap.val() };
 }
