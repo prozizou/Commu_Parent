@@ -18,9 +18,10 @@ avec messagerie interne temps réel, notifications in-app et emails automatiques
    - Activer Realtime Database (mode verrouillé) et importer `database.rules.json`.
    - Activer Authentication > Email/Password.
    - Custom claims requis sur chaque utilisateur Auth :
-     - Parent : `{ parentId: "PAR-2026-0042" }`
-     - Staff : `{ staff: true, role: "admin" | "professeur", ecoleId: "..." }`
-     - À définir via une Cloud Function `beforeSignIn` ou un script admin (Admin SDK `setCustomUserClaims`).
+     - Parent : `{ parentId: "PAR-2026-0042" }` — posé automatiquement par `/admin/create-parent`.
+     - Staff : `{ staff: true, role: "admin" | "professeur", ecoleId: "..." }` — posé
+       automatiquement par `/admin/create-staff` (voir section « Super Admin » plus bas
+       pour le bootstrap du tout premier compte).
 
 2. **Cloudinary**
    - Créer un upload preset **unsigned** (Settings > Upload > Upload presets).
@@ -62,7 +63,35 @@ notifications/{parentId}/{notifId}
 schools/{schoolId}
 evaluations/{studentId}/{evaluationId}
 groups/{groupId}
+staff/{uid}
 ```
+
+## Super Admin
+
+`prozizou298@gmail.com` est le Super Admin de l'établissement. Un compte Super Admin
+est un compte staff (Firebase Auth email + mot de passe) avec les custom claims
+`{ staff: true, role: "admin" }`. Il peut créer des comptes parents, élèves et
+personnel (professeurs et autres Super Admin) depuis `/admin`.
+
+**Bootstrap du tout premier compte Super Admin :**
+1. Définir `ADMIN_API_SECRET` dans les variables d'environnement (Vercel ou `.env.local`).
+2. Aller sur `/admin/create-staff`, saisir ce code admin + le nom, l'email
+   (`prozizou298@gmail.com`) et le rôle "Super Admin".
+3. Un mot de passe provisoire est généré et affiché une seule fois : le transmettre à la
+   personne concernée pour sa première connexion sur `/admin/login`, puis lui faire
+   changer ce mot de passe (Firebase Auth > réinitialisation) dès que possible.
+
+**Une fois un Super Admin connecté**, `ADMIN_API_SECRET` n'est plus utilisé : toutes les
+pages `/admin/*` (créer un parent, un élève, un membre du personnel, une évaluation)
+authentifient leurs appels avec le token de session Super Admin
+(`Authorization: Bearer <idToken>`), vérifié côté serveur par `lib/adminAuth.ts`. Un
+Super Admin peut créer d'autres comptes staff (professeurs ou Super Admin
+supplémentaires) depuis `/admin/create-staff` sans code admin.
+
+Les règles RTDB (`database.rules.json`, noeud `staff/{uid}`) n'autorisent l'écriture
+de fiches staff qu'aux comptes portant déjà le rôle `"admin"` — cohérent avec le fait
+que la création passe de toute façon par l'API serveur (Admin SDK), qui applique la
+même règle via `requireStaff(req, "admin")`.
 
 ## Analyse des performances scolaires
 
@@ -80,22 +109,24 @@ groupe/établissement/référence externe, évolution dans le temps).
 - **`types/index.ts`** — modèle de données (`Evaluation`, `MatiereResult`,
   `DomaineResult`, `SousCompetenceResult`, `ComparaisonScores`).
 - **`/admin/create-evaluation`** — saisie staff d'une évaluation pour un élève
-  (protégée par `ADMIN_API_SECRET`, comme les autres pages `/admin/*`).
+  (réservée au Super Admin, voir section « Super Admin » ci-dessus).
 - **`/performance/{studentId}`** — vue parent simplifiée : score global, niveau,
   pourcentage par matière, points forts, points à travailler, progression depuis la
   dernière évaluation. Respecte les mêmes règles RTDB que `students/{studentId}` : un
   parent ne voit que les évaluations de ses propres enfants.
 
 Une vue détaillée côté enseignant/direction (domaines, sous-compétences, comparaisons
-complètes, distribution de classe) reste à construire — elle suppose une interface
-staff authentifiée (cf. « À faire ensuite » ci-dessous), qui n'existe pas encore dans
-l'app. `lib/performance.ts` fournit déjà tout le calcul nécessaire pour l'alimenter.
+complètes, distribution de classe) reste à construire au-delà de la saisie admin
+actuelle (cf. « À faire ensuite » ci-dessous). `lib/performance.ts` fournit déjà tout
+le calcul nécessaire pour l'alimenter.
 
 ## À faire ensuite
-- Interface staff (admin/professeur) authentifiée : création de parents, envoi de
-  notifications, vue messagerie globale, **vue détaillée des performances**
-  (domaines/sous-compétences, comparaisons, distribution de classe, évolution
-  pluriannuelle de l'établissement).
-- Script d'attribution des custom claims Auth (Admin SDK).
+- Vue staff détaillée des performances (domaines/sous-compétences, comparaisons,
+  distribution de classe, évolution pluriannuelle de l'établissement) — accessible aux
+  professeurs, pas seulement au Super Admin.
+- Accès `/admin/*` différencié par rôle : aujourd'hui toutes les routes exigent
+  `role === "admin"` ; un rôle "professeur" pourrait par exemple saisir des évaluations
+  sans avoir le droit de créer des comptes.
+- Envoi de notifications, vue messagerie globale côté staff.
 - Génération automatique de l'ID unique + email pro à l'inscription d'un parent.
 - Notifications push (FCM) côté client.

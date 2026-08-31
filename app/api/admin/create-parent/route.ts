@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminAuth, getAdminDb } from "@/lib/firebaseAdmin";
+import { requireStaff, AuthError } from "@/lib/adminAuth";
 
 export const runtime = "nodejs";
 
@@ -17,10 +18,11 @@ async function genererIdUnique() {
 }
 
 export async function POST(req: NextRequest) {
-  // Protection simple : un secret partagé, à définir dans Vercel (ADMIN_API_SECRET)
-  // et saisi dans le formulaire admin. Évite que la route soit appelable publiquement.
-  const secret = req.headers.get("x-admin-secret");
-  if (!secret || secret !== process.env.ADMIN_API_SECRET) {
+  // Réservé au Super Admin (compte staff Firebase Auth, claim role="admin").
+  try {
+    await requireStaff(req, "admin");
+  } catch (err) {
+    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
     return NextResponse.json({ error: "Non autorisé." }, { status: 401 });
   }
 

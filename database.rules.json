@@ -52,6 +52,14 @@
         ".read": "auth != null && auth.token.staff === true",
         ".write": "auth != null && auth.token.staff === true"
       }
+    },
+    "staff": {
+      "$uid": {
+        // Une fiche staff (admin/professeur) est lisible par son titulaire et par tout le staff.
+        // Écriture réservée au Super Admin : seul un rôle "admin" peut créer/modifier des comptes staff.
+        ".read": "auth != null && (auth.uid === $uid || auth.token.staff === true)",
+        ".write": "auth != null && auth.token.staff === true && auth.token.role === 'admin'"
+      }
     }
   }
 }
