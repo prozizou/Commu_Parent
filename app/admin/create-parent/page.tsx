@@ -3,6 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import { useState } from "react";
+import Link from "next/link";
 
 export default function CreateParentAdminPage() {
   const [adminSecret, setAdminSecret] = useState("");
@@ -42,6 +43,9 @@ export default function CreateParentAdminPage() {
       <header className="mb-6">
         <p className="text-sm text-ink-400">Commu_Parent — Admin</p>
         <h1 className="font-display text-2xl text-ink-900">Créer un compte parent</h1>
+        <Link href="/admin/create-student" className="text-sm text-accent underline">
+          Créer un élève →
+        </Link>
       </header>
 
       <form onSubmit={handleSubmit} className="space-y-4 bg-white border border-ink-100 rounded-lg p-5">
