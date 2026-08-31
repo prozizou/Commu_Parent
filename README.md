@@ -67,6 +67,26 @@ groups/{groupId}
 staff/{uid}
 ```
 
+## ⚠️ Mode ouvert temporaire (authentification désactivée)
+
+`lib/authConfig.ts` exporte `AUTH_DISABLED = true` : tant que ce flag vaut `true`,
+**aucune connexion n'est requise** pour créer des parents, élèves, professeurs ou
+évaluations, ni pour consulter les performances de n'importe quel élève — la page
+d'accueil (`/`) donne un accès direct à tout ça. `lib/adminAuth.ts` (`requireStaff`)
+et `components/GardeSuperAdmin.tsx` court-circuitent leurs vérifications tant que ce
+flag est actif.
+
+C'est une décision assumée pour le moment (démo/tests), mais **dangereuse en
+production réelle** : n'importe qui connaissant l'URL peut lire et écrire toutes les
+données de l'app via les routes `/api/admin/*`. Les règles RTDB
+(`database.rules.json`) restent, elles, inchangées et continuent d'exiger une
+authentification pour les accès **directs** côté client (elles ne protègent pas les
+routes `/api/admin/*`, qui passent par l'Admin SDK).
+
+**Pour réactiver l'authentification Super Admin** : repasser `AUTH_DISABLED` à
+`false` dans `lib/authConfig.ts`. Tout le système Super Admin décrit ci-dessous reste
+en place et redevient actif immédiatement (aucune autre modification nécessaire).
+
 ## Super Admin
 
 `prozizou298@gmail.com` est le Super Admin de l'établissement. Un compte Super Admin
@@ -115,6 +135,13 @@ groupe/établissement/référence externe, évolution dans le temps).
   pourcentage par matière, points forts, points à travailler, progression depuis la
   dernière évaluation. Respecte les mêmes règles RTDB que `students/{studentId}` : un
   parent ne voit que les évaluations de ses propres enfants.
+- **`components/ObjectifsPerformance.tsx`** — répond directement aux cinq questions
+  fondamentales de la méthodologie (niveau, comparaison groupe, comparaison
+  établissement/référence externe, compétences maîtrisées/à renforcer, évolution dans
+  le temps) à partir de l'historique d'évaluations d'un élève. Utilisé sur la page
+  d'accueil (`/`, voir section « Mode ouvert temporaire » ci-dessus).
+- **`/api/admin/evaluations?studentId=...`** — lit les évaluations d'un élève (Admin
+  SDK), utilisé par la page d'accueil pour alimenter `ObjectifsPerformance`.
 
 Une vue détaillée côté enseignant/direction (domaines, sous-compétences, comparaisons
 complètes, distribution de classe) reste à construire au-delà de la saisie admin
@@ -141,6 +168,8 @@ le calcul nécessaire pour l'alimenter.
   `activate`, le service worker supprime tous les caches de l'ancienne version.
 
 ## À faire ensuite
+- **Repasser `AUTH_DISABLED` à `false`** (`lib/authConfig.ts`) avant tout déploiement
+  destiné à de vraies données — voir « Mode ouvert temporaire » ci-dessus.
 - Vue staff détaillée des performances (domaines/sous-compétences, comparaisons,
   distribution de classe, évolution pluriannuelle de l'établissement) — accessible aux
   professeurs, pas seulement au Super Admin.
