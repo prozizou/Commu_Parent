@@ -1,0 +1,41 @@
+{
+  "rules": {
+    "parents": {
+      "$parentId": {
+        // Un parent ne peut lire/écrire que sa propre fiche.
+        // Le staff (custom claim staff=true) peut tout lire pour gérer les familles.
+        ".read": "auth != null && (auth.token.parentId === $parentId || auth.token.staff === true)",
+        ".write": "auth != null && auth.token.staff === true"
+      }
+    },
+    "students": {
+      "$studentId": {
+        ".read": "auth != null && (auth.token.staff === true || (data.child('parentIds').child(auth.token.parentId).exists()))",
+        ".write": "auth != null && auth.token.staff === true"
+      }
+    },
+    "messages": {
+      "$threadId": {
+        // threadId format recommandé : "<studentId>_<parentId>" pour isoler chaque famille
+        ".read": "auth != null && (auth.token.staff === true || $threadId.contains(auth.token.parentId))",
+        ".write": "auth != null && (auth.token.staff === true || $threadId.contains(auth.token.parentId))"
+      }
+    },
+    "notifications": {
+      "$parentId": {
+        ".read": "auth != null && (auth.token.parentId === $parentId || auth.token.staff === true)",
+        ".write": "auth != null && auth.token.staff === true",
+        "$notifId": {
+          "lu": {
+            // Le parent peut marquer ses propres notifs comme lues, rien d'autre.
+            ".write": "auth != null && auth.token.parentId === $parentId"
+          }
+        }
+      }
+    },
+    "schools": {
+      ".read": "auth != null",
+      ".write": "auth != null && auth.token.staff === true"
+    }
+  }
+}
