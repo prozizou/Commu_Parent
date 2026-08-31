@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useSuperAdmin } from "@/lib/useSuperAdmin";
+import { AUTH_DISABLED } from "@/lib/authConfig";
 import { logout } from "@/lib/auth";
 
 /**
@@ -14,7 +15,13 @@ export function GardeSuperAdmin({
 }: {
   children: (getToken: () => Promise<string>) => React.ReactNode;
 }) {
+  // Le hook reste appelé (règle des hooks) mais son résultat est ignoré tant que
+  // l'authentification est désactivée — voir lib/authConfig.ts.
   const etat = useSuperAdmin();
+
+  if (AUTH_DISABLED) {
+    return <>{children(async () => "")}</>;
+  }
 
   if (etat.loading) {
     return <p className="text-sm text-ink-400">Vérification de la session...</p>;

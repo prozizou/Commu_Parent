@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 import { useState } from "react";
 import Link from "next/link";
 import { useSuperAdmin } from "@/lib/useSuperAdmin";
+import { AUTH_DISABLED } from "@/lib/authConfig";
 import type { StaffRole } from "@/types";
 
 export default function CreateStaffAdminPage() {
@@ -21,7 +22,9 @@ export default function CreateStaffAdminPage() {
   // Tant qu'aucun Super Admin n'est connecté, on autorise la création via le code
   // ADMIN_API_SECRET (bootstrap du tout premier compte). Une fois connecté en Super
   // Admin, ce champ disparaît : la requête est authentifiée par le token de session.
-  const modeBootstrap = etat.loading ? true : !(etat.connecte && etat.autorise);
+  // Voir lib/authConfig.ts : tant que l'authentification est désactivée, ni le code
+  // admin ni la session ne sont nécessaires (le serveur n'exige plus rien).
+  const modeBootstrap = AUTH_DISABLED ? false : etat.loading ? true : !(etat.connecte && etat.autorise);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -30,7 +33,9 @@ export default function CreateStaffAdminPage() {
     setLoading(true);
     try {
       const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (modeBootstrap) {
+      if (AUTH_DISABLED) {
+        // rien à envoyer, le serveur n'exige aucune authentification pour l'instant.
+      } else if (modeBootstrap) {
         if (!adminSecret) throw new Error("Code admin requis pour créer le tout premier compte Super Admin.");
         headers["x-admin-secret"] = adminSecret;
       } else if (!etat.loading && etat.connecte && etat.autorise) {

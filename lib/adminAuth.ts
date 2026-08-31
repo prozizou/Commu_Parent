@@ -10,6 +10,7 @@
  */
 import type { NextRequest } from "next/server";
 import { getAdminAuth } from "./firebaseAdmin";
+import { AUTH_DISABLED } from "./authConfig";
 import type { StaffRole } from "@/types";
 
 export class AuthError extends Error {
@@ -27,6 +28,11 @@ export type StaffContext = { uid: string; email: string; role: StaffRole; ecoleI
  * rôle Super Admin ; `"any"` accepte n'importe quel membre du staff (admin ou professeur).
  */
 export async function requireStaff(req: NextRequest, roleRequis: "admin" | "any" = "admin"): Promise<StaffContext> {
+  // Voir lib/authConfig.ts : interrupteur temporaire, à retirer avec l'authentification réactivée.
+  if (AUTH_DISABLED) {
+    return { uid: "auth-disabled", email: "", role: "admin", ecoleId: null };
+  }
+
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.startsWith("Bearer ") ? authHeader.slice("Bearer ".length) : null;
   if (!token) throw new AuthError("Connexion requise.");
