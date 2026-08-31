@@ -34,6 +34,24 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!parentId) return;
 
+    // parents/{parentId}/enfants ne contient que les studentId (Record<string, true>) :
+    // on va chercher la fiche complète de chaque élève dans /students.
+    const unsubParent = onValue(ref(rtdb, `parents/${parentId}/enfants`), (snap) => {
+      const studentIds = snap.exists() ? Object.keys(snap.val()) : [];
+      if (studentIds.length === 0) {
+        setEnfants([]);
+        return;
+      }
+      Promise.all(
+        studentIds.map(
+          (id) =>
+            new Promise<Student | null>((resolve) => {
+              onValue(ref(rtdb, `students/${id}`), (s) => resolve(s.exists() ? s.val() : null), { onlyOnce: true });
+            })
+        )
+      ).then((liste) => setEnfants(liste.filter((s): s is Student => s !== null)));
+    });
+
     const notifQuery = query(ref(rtdb, `notifications/${parentId}`), orderByChild("timestamp"), limitToLast(20));
     const unsubNotifs = onValue(notifQuery, (snap) => {
       const list: AppNotification[] = [];
@@ -43,7 +61,10 @@ export default function DashboardPage() {
       setNotifs(list.reverse());
     });
 
-    return () => unsubNotifs();
+    return () => {
+      unsubParent();
+      unsubNotifs();
+    };
   }, [parentId]);
 
   return (
@@ -60,14 +81,23 @@ export default function DashboardPage() {
         ) : (
           <div className="grid gap-2">
             {enfants.map((s) => (
-              <Link
+              <div
                 key={s.id}
-                href={`/messages/${s.id}_${parentId}`}
-                className="flex items-center justify-between rounded-md border border-ink-100 bg-white px-4 py-3 hover:border-accent transition-colors"
+                className="rounded-md border border-ink-100 bg-white px-4 py-3 hover:border-accent transition-colors"
               >
-                <span className="font-medium text-ink-800">{s.nom}</span>
-                <span className="text-sm text-ink-400">{s.classe}</span>
-              </Link>
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-ink-800">{s.nom}</span>
+                  <span className="text-sm text-ink-400">{s.classe}</span>
+                </div>
+                <div className="mt-2 flex gap-4 text-sm">
+                  <Link href={`/messages/${s.id}_${parentId}`} className="text-accent">
+                    Messagerie
+                  </Link>
+                  <Link href={`/performance/${s.id}`} className="text-accent">
+                    Résultats scolaires
+                  </Link>
+                </div>
+              </div>
             ))}
           </div>
         )}

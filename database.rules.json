@@ -36,6 +36,22 @@
     "schools": {
       ".read": "auth != null",
       ".write": "auth != null && auth.token.staff === true"
+    },
+    "evaluations": {
+      "$studentId": {
+        // Même logique d'accès que students/$studentId : le staff voit tout,
+        // un parent ne voit que les évaluations de ses propres enfants.
+        ".read": "auth != null && (auth.token.staff === true || root.child('students').child($studentId).child('parentIds').child(auth.token.parentId).exists())",
+        ".write": "auth != null && auth.token.staff === true"
+      }
+    },
+    "groups": {
+      "$groupId": {
+        // Groupes/classes utilisés pour les moyennes de comparaison (section "groupe").
+        // Réservé au staff : les parents lisent les moyennes via evaluations/comparaisons, pas ce noeud.
+        ".read": "auth != null && auth.token.staff === true",
+        ".write": "auth != null && auth.token.staff === true"
+      }
     }
   }
 }

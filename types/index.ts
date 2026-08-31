@@ -59,3 +59,70 @@ export type Staff = {
   role: StaffRole;
   ecoleId: string;
 };
+
+/* ------------------------------------------------------------------ */
+/* Analyse des performances scolaires                                  */
+/* Modèle inspiré de la méthodologie Cambridge Primary Checkpoint :    */
+/* Élève > Matière > Domaine > Sous-compétence > points obtenus/possibles */
+/* ------------------------------------------------------------------ */
+
+/** Une sous-compétence est toujours exprimée en points obtenus / points possibles. */
+export type SousCompetenceResult = {
+  id: string;
+  nom: string;
+  pointsObtenus: number;
+  pointsPossibles: number;
+};
+
+/**
+ * Un domaine peut porter un score déjà agrégé par l'école (ex: barème Cambridge 0-50,
+ * fourni tel quel dans le rapport) et/ou le détail des sous-compétences qui permet
+ * le diagnostic fin ("il réussit la compréhension globale mais pas le détail").
+ * Les deux ne sont pas nécessairement recalculables l'un depuis l'autre.
+ */
+export type DomaineResult = {
+  id: string;
+  nom: string;
+  score?: number; // score agrégé du domaine, sur le même barème que la matière
+  sousCompetences: SousCompetenceResult[];
+};
+
+export type MatiereResult = {
+  id: string;
+  nom: string; // ex: "Mathématiques", "English as a Second Language"
+  scoreGlobal: number; // score de la matière, sur le barème de l'évaluation (ex: 0-50)
+  domaines: DomaineResult[];
+};
+
+/** Comparaisons possibles pour un score donné (matière ou score global). */
+export type ComparaisonScores = {
+  eleve: number;
+  groupe?: number;
+  etablissement?: number;
+  referenceExterne?: number; // ex: moyenne internationale
+};
+
+export type Bareme = { min: number; max: number };
+
+export type Evaluation = {
+  id: string;
+  studentId: string;
+  ecoleId: string;
+  groupeId?: string;
+  session: string; // ex: "2026-05" ou "Cambridge Primary Checkpoint - May 2026"
+  bareme: Bareme; // ex: { min: 0, max: 50 }
+  scoreGlobal: number; // score global toutes matières confondues, sur le barème ci-dessus
+  matieres: MatiereResult[];
+  comparaisons?: Record<string, ComparaisonScores>; // clé = matiere.id, ou "global"
+  createdAt: number;
+  createdBy?: string; // uid staff
+};
+
+/** Les six niveaux de performance du barème Cambridge Primary Checkpoint (0-50). */
+export type NiveauPerformance =
+  | "unclassified"
+  | "basic"
+  | "aspiring"
+  | "good"
+  | "high"
+  | "outstanding";
