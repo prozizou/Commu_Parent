@@ -8,7 +8,9 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   icons: {
     icon: "/icons/icon.svg",
-    apple: "/icons/icon.svg"
+    // iOS ignore les icônes SVG pour "Ajouter à l'écran d'accueil" : il lui faut un PNG
+    // dédié, sans coins arrondis ni transparence (iOS applique lui-même le masque).
+    apple: "/icons/apple-touch-icon.png"
   }
 };
 
