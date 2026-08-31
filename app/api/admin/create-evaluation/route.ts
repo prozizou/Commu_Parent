@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebaseAdmin";
+import { requireStaff, AuthError } from "@/lib/adminAuth";
 import { synthetiserEvaluation } from "@/lib/performance";
 import type { ComparaisonScores, Evaluation, MatiereResult } from "@/types";
 
@@ -8,8 +9,10 @@ export const runtime = "nodejs";
 const BAREME_PAR_DEFAUT = { min: 0, max: 50 };
 
 export async function POST(req: NextRequest) {
-  const secret = req.headers.get("x-admin-secret");
-  if (!secret || secret !== process.env.ADMIN_API_SECRET) {
+  try {
+    await requireStaff(req, "admin");
+  } catch (err) {
+    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
     return NextResponse.json({ error: "Non autorisé." }, { status: 401 });
   }
 

@@ -4,6 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { useState } from "react";
 import Link from "next/link";
+import { GardeSuperAdmin } from "@/components/GardeSuperAdmin";
 import { parseMatiereTexte, EXEMPLE_MATIERE_TEXTE, EvaluationParseError } from "@/lib/evaluationParser";
 import type { ComparaisonScores, MatiereResult } from "@/types";
 
@@ -16,7 +17,6 @@ function nouveauBloc(texte = ""): BlocMatiere {
 }
 
 export default function CreateEvaluationAdminPage() {
-  const [adminSecret, setAdminSecret] = useState("");
   const [students, setStudents] = useState<StudentOption[]>([]);
   const [chargement, setChargement] = useState(false);
 
@@ -36,15 +36,12 @@ export default function CreateEvaluationAdminPage() {
     null
   );
 
-  async function chargerEleves() {
-    if (!adminSecret) {
-      setErreur("Saisis le code admin d'abord.");
-      return;
-    }
+  async function chargerEleves(getToken: () => Promise<string>) {
     setErreur(null);
     setChargement(true);
     try {
-      const res = await fetch("/api/admin/students", { headers: { "x-admin-secret": adminSecret } });
+      const token = await getToken();
+      const res = await fetch("/api/admin/students", { headers: { authorization: `Bearer ${token}` } });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Erreur de chargement.");
       setStudents(data.students);
@@ -78,7 +75,7 @@ export default function CreateEvaluationAdminPage() {
     setBlocs((prev) => prev.filter((_, i) => i !== index));
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent, getToken: () => Promise<string>) {
     e.preventDefault();
     setErreur(null);
     setResultat(null);
@@ -107,9 +104,10 @@ export default function CreateEvaluationAdminPage() {
 
     setEnvoi(true);
     try {
+      const token = await getToken();
       const res = await fetch("/api/admin/create-evaluation", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-admin-secret": adminSecret },
+        headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
         body: JSON.stringify({
           studentId,
           session: session.trim(),
@@ -142,35 +140,36 @@ export default function CreateEvaluationAdminPage() {
           Saisir les résultats d'une évaluation (matières → domaines → sous-compétences), sur le modèle
           Cambridge Primary Checkpoint.
         </p>
-        <Link href="/admin/create-student" className="text-sm text-accent underline">
-          ← Créer un élève
-        </Link>
+        <div className="flex gap-3 text-sm mt-1">
+          <Link href="/admin" className="text-accent underline">
+            ← Accueil admin
+          </Link>
+          <Link href="/admin/create-student" className="text-accent underline">
+            Créer un élève
+          </Link>
+        </div>
       </header>
 
-      <div className="mb-4 flex gap-2">
-        <input
-          type="password"
-          placeholder="Code admin"
-          value={adminSecret}
-          onChange={(e) => setAdminSecret(e.target.value)}
-          className="flex-1 rounded-md border border-ink-100 px-3 py-2 focus:border-accent"
-        />
+      <GardeSuperAdmin>
+        {(getToken) => (
+          <>
+      <div className="mb-4">
         <button
           type="button"
-          onClick={chargerEleves}
+          onClick={() => chargerEleves(getToken)}
           disabled={chargement}
-          className="rounded-md bg-ink-800 text-paper px-3 py-2 text-sm font-medium disabled:opacity-60"
+          className="w-full rounded-md bg-ink-800 text-paper px-3 py-2 text-sm font-medium disabled:opacity-60"
         >
-          {chargement ? "..." : "Charger"}
+          {chargement ? "Chargement..." : "Charger la liste des élèves"}
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5 bg-white border border-ink-100 rounded-lg p-5">
+      <form onSubmit={(e) => handleSubmit(e, getToken)} className="space-y-5 bg-white border border-ink-100 rounded-lg p-5">
         <div>
           <label className="block text-sm text-ink-600 mb-1">Élève</label>
           {students.length === 0 ? (
             <p className="text-xs text-ink-400">
-              Saisis le code admin puis appuie sur "Charger" pour voir la liste des élèves.
+              Appuie sur "Charger la liste des élèves" pour voir les élèves disponibles.
             </p>
           ) : (
             <select
@@ -312,6 +311,9 @@ export default function CreateEvaluationAdminPage() {
           Évaluation enregistrée — score global {resultat.scoreGlobal} ({resultat.niveau}).
         </div>
       )}
+          </>
+        )}
+      </GardeSuperAdmin>
     </main>
   );
 }
