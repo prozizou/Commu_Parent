@@ -60,10 +60,42 @@ students/{studentId}
 messages/{studentId}_{parentId}/{messageId}
 notifications/{parentId}/{notifId}
 schools/{schoolId}
+evaluations/{studentId}/{evaluationId}
+groups/{groupId}
 ```
 
+## Analyse des performances scolaires
+
+Méthodologie d'analyse pédagogique inspirée du rapport *Cambridge Primary Checkpoint*
+(échelle de score 0–50, niveaux Basic/Aspiring/Good/High/Outstanding, décomposition
+Matière → Domaine → Sous-compétence → points obtenus/possibles, comparaisons
+groupe/établissement/référence externe, évolution dans le temps).
+
+- **`lib/performance.ts`** — moteur de calcul pur (pourcentages, niveau de performance,
+  forces/difficultés, comparaisons, distribution des niveaux dans un groupe, tendance
+  d'évolution). Point d'entrée : `synthetiserEvaluation(evaluation)`.
+- **`lib/evaluationParser.ts`** — parseur du format texte utilisé par le staff pour
+  saisir une matière (`Matiere: / Score: / Domaine: / Sous:`), voir
+  `/admin/create-evaluation`.
+- **`types/index.ts`** — modèle de données (`Evaluation`, `MatiereResult`,
+  `DomaineResult`, `SousCompetenceResult`, `ComparaisonScores`).
+- **`/admin/create-evaluation`** — saisie staff d'une évaluation pour un élève
+  (protégée par `ADMIN_API_SECRET`, comme les autres pages `/admin/*`).
+- **`/performance/{studentId}`** — vue parent simplifiée : score global, niveau,
+  pourcentage par matière, points forts, points à travailler, progression depuis la
+  dernière évaluation. Respecte les mêmes règles RTDB que `students/{studentId}` : un
+  parent ne voit que les évaluations de ses propres enfants.
+
+Une vue détaillée côté enseignant/direction (domaines, sous-compétences, comparaisons
+complètes, distribution de classe) reste à construire — elle suppose une interface
+staff authentifiée (cf. « À faire ensuite » ci-dessous), qui n'existe pas encore dans
+l'app. `lib/performance.ts` fournit déjà tout le calcul nécessaire pour l'alimenter.
+
 ## À faire ensuite
-- Interface staff (admin/professeur) : création de parents, envoi de notifications, vue messagerie globale.
+- Interface staff (admin/professeur) authentifiée : création de parents, envoi de
+  notifications, vue messagerie globale, **vue détaillée des performances**
+  (domaines/sous-compétences, comparaisons, distribution de classe, évolution
+  pluriannuelle de l'établissement).
 - Script d'attribution des custom claims Auth (Admin SDK).
 - Génération automatique de l'ID unique + email pro à l'inscription d'un parent.
 - Notifications push (FCM) côté client.
