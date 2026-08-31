@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { useEffect, useRef, useState } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { ref, push, onValue, query, orderByChild, serverTimestamp } from "firebase/database";
@@ -22,7 +24,9 @@ export default function MessageThreadPage({ params }: { params: { threadId: stri
     const q = query(ref(rtdb, `messages/${threadId}`), orderByChild("timestamp"));
     return onValue(q, (snap) => {
       const list: Message[] = [];
-      snap.forEach((child) => list.push({ id: child.key!, ...child.val() }));
+      snap.forEach((child) => {
+        list.push({ id: child.key!, ...child.val() });
+      });
       setMessages(list);
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
     });
