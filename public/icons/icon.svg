@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Commu_Parent">
+  <rect width="512" height="512" rx="96" fill="#1a2f45"/>
+  <text
+    x="50%"
+    y="50%"
+    dominant-baseline="central"
+    text-anchor="middle"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="220"
+    font-weight="600"
+    fill="#f7f4ee"
+  >CP</text>
+</svg>

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Commu_Parent — Hors connexion</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: #f7f4ee;
+        color: #101d2c;
+        font-family: -apple-system, "Inter", system-ui, sans-serif;
+        text-align: center;
+      }
+      main { max-width: 320px; }
+      h1 { font-size: 1.25rem; margin: 0 0 8px; }
+      p { color: #4a6a8a; font-size: 0.9rem; margin: 0 0 20px; }
+      button {
+        border: none;
+        border-radius: 6px;
+        background: #1a2f45;
+        color: #f7f4ee;
+        padding: 10px 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Pas de connexion internet</h1>
+      <p>Cette page nécessite une connexion. Réessaie dès que tu es de nouveau en ligne.</p>
+      <button onclick="location.reload()">Réessayer</button>
+    </main>
+  </body>
+</html>

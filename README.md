@@ -9,6 +9,7 @@ avec messagerie interne temps réel, notifications in-app et emails automatiques
 - Firebase Auth (parents via ID unique, staff via email/mot de passe)
 - Cloudinary (pièces jointes : justificatifs, bulletins, photos)
 - Cloud Functions + Resend (emails automatiques sur nouvelle notification)
+- Service worker (PWA installable + page hors-ligne), voir section dédiée plus bas
 - Vercel (déploiement)
 
 ## Mise en route
@@ -119,6 +120,21 @@ Une vue détaillée côté enseignant/direction (domaines, sous-compétences, co
 complètes, distribution de classe) reste à construire au-delà de la saisie admin
 actuelle (cf. « À faire ensuite » ci-dessous). `lib/performance.ts` fournit déjà tout
 le calcul nécessaire pour l'alimenter.
+
+## Service worker (PWA)
+
+- **`public/sw.js`** — cache uniquement les assets vraiment statiques (icône, manifest,
+  fichiers `_next/static` content-hashés) et sert `public/offline.html` en secours quand
+  la navigation échoue faute de réseau. Ne met **jamais** en cache les pages HTML ni les
+  appels Firebase/Cloudinary : l'app est trop dynamique (temps réel) pour ça.
+- **`public/manifest.json`** + **`public/icons/icon.svg`** — installabilité PWA (icône
+  provisoire "CP" en SVG ; à remplacer par le vrai logo si besoin — l'ajout d'un PNG
+  `apple-touch-icon` améliorerait aussi le rendu sur iOS, qui ignore les icônes SVG).
+- **`components/ServiceWorkerRegistration.tsx`** — enregistre le service worker
+  uniquement en production (jamais en `next dev`, pour ne pas gêner le hot-reload).
+- **Bump de version** : après un déploiement qui change les assets mis en cache,
+  incrémenter `CACHE_VERSION` dans `public/sw.js` (`"v1"` → `"v2"`, etc.). Au prochain
+  `activate`, le service worker supprime tous les caches de l'ancienne version.
 
 ## À faire ensuite
 - Vue staff détaillée des performances (domaines/sous-compétences, comparaisons,

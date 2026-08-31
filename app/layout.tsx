@@ -1,9 +1,19 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 
 export const metadata: Metadata = {
   title: "Commu_Parent",
-  description: "Liaison école-parents : messagerie, notifications et suivi en temps réel."
+  description: "Liaison école-parents : messagerie, notifications et suivi en temps réel.",
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/icons/icon.svg",
+    apple: "/icons/icon.svg"
+  }
+};
+
+export const viewport: Viewport = {
+  themeColor: "#c96a4d"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -16,7 +26,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body className="bg-paper text-ink-900 font-body antialiased">{children}</body>
+      <body className="bg-paper text-ink-900 font-body antialiased">
+        <ServiceWorkerRegistration />
+        {children}
+      </body>
     </html>
   );
 }
