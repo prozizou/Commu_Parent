@@ -66,3 +66,84 @@ export function PositionBadge({
     </span>
   );
 }
+
+const COULEURS_NIVEAU_BARRE: Record<NiveauPerformance, string> = {
+  unclassified: "#8a97a6",
+  basic: "#c14f4f",
+  aspiring: "#c96a4d",
+  good: "#4a6a8a",
+  high: "#2c4a68",
+  outstanding: "#101d2c"
+};
+
+/** Barre de répartition des niveaux d'une classe/établissement (section 9 du cahier des charges). */
+export function BarreDistribution({ distribution }: { distribution: Record<NiveauPerformance, number> }) {
+  const segments = (Object.entries(distribution) as [NiveauPerformance, number][]).filter(([, v]) => v > 0);
+  if (segments.length === 0) return null;
+  return (
+    <div>
+      <div className="flex h-2.5 rounded-full overflow-hidden mb-2">
+        {segments.map(([niveau, valeur]) => (
+          <div key={niveau} style={{ width: `${valeur}%`, background: COULEURS_NIVEAU_BARRE[niveau] }} />
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-400">
+        {segments.map(([niveau, valeur]) => (
+          <span key={niveau} className="flex items-center gap-1.5">
+            <span className="inline-block w-2 h-2 rounded-full" style={{ background: COULEURS_NIVEAU_BARRE[niveau] }} />
+            {LIBELLES_NIVEAU[niveau]} · {valeur}%
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Liste de domaines forts ou faibles (établissement/classe), même granularité que ItemEvalue. */
+export function ListeDomaines({
+  titre,
+  items,
+  tonalite
+}: {
+  titre: string;
+  items: { id: string; nom: string; pourcentage: number }[];
+  tonalite: "force" | "priorite";
+}) {
+  if (items.length === 0) return null;
+  const couleur = tonalite === "force" ? "text-ink-800" : "text-red-600";
+  return (
+    <div>
+      <h3 className={`text-xs font-semibold mb-2 ${tonalite === "force" ? "text-ink-600" : "text-red-700"}`}>
+        {titre}
+      </h3>
+      <ul className="space-y-1">
+        {items.map((item) => (
+          <li key={item.id} className="flex justify-between text-sm">
+            <span className="text-ink-800">{item.nom}</span>
+            <span className={`tabular-nums ${couleur}`}>{item.pourcentage}%</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** Barres verticales d'évolution de la moyenne établissement, session par session. */
+export function EvolutionBarres({ points }: { points: { session: string; moyenne: number }[] }) {
+  if (points.length === 0) return null;
+  const max = Math.max(...points.map((p) => p.moyenne), 1);
+  return (
+    <div className="flex items-end gap-3 h-24">
+      {points.map((p) => (
+        <div key={p.session} className="flex flex-col items-center flex-1 h-full justify-end">
+          <div
+            className="w-full rounded-t-sm bg-accent"
+            style={{ height: `${(p.moyenne / max) * 100}%`, minHeight: 4 }}
+          />
+          <div className="text-xs text-ink-400 mt-1.5">{p.session}</div>
+          <div className="text-xs text-ink-800 tabular-nums">{p.moyenne}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
