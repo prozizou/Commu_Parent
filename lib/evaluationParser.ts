@@ -82,7 +82,7 @@ export function parseMatiereTexte(texte: string): MatiereResult {
         );
       }
       const sc: SousCompetenceResult = { id: slugify(scNom), nom: scNom, pointsObtenus: obtenus, pointsPossibles: possibles };
-      domaineCourant.sousCompetences.push(sc);
+      (domaineCourant.sousCompetences ??= []).push(sc);
     } else {
       throw new EvaluationParseError(`Ligne non reconnue : "${ligne}"`);
     }

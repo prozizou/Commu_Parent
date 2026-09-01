@@ -73,13 +73,14 @@ export async function GET(req: NextRequest) {
         for (const matiere of derniere.matieres) {
           for (const domaine of matiere.domaines) {
             const domaineMatch = domaine.nom.toLowerCase().includes(qLower);
+            const sousCompetences = domaine.sousCompetences ?? [];
             const pourcentageDomaine =
               domaine.score !== undefined
                 ? Math.round((domaine.score / derniere.bareme.max) * 1000) / 10
-                : domaine.sousCompetences.length > 0
+                : sousCompetences.length > 0
                 ? Math.round(
-                    (domaine.sousCompetences.reduce((s, sc) => s + sc.pointsObtenus, 0) /
-                      domaine.sousCompetences.reduce((s, sc) => s + sc.pointsPossibles, 0)) *
+                    (sousCompetences.reduce((s, sc) => s + sc.pointsObtenus, 0) /
+                      sousCompetences.reduce((s, sc) => s + sc.pointsPossibles, 0)) *
                       1000
                   ) / 10
                 : 0;
@@ -95,7 +96,7 @@ export async function GET(req: NextRequest) {
               });
             }
 
-            for (const sc of domaine.sousCompetences) {
+            for (const sc of sousCompetences) {
               const scMatch = sc.nom.toLowerCase().includes(qLower);
               const pourcentageSc = Math.round((sc.pointsObtenus / sc.pointsPossibles) * 1000) / 10;
               if (scMatch && pourcentageSc < 70) {
