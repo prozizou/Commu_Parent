@@ -10,7 +10,9 @@ const LIENS = [
   { href: "/admin/create-parent", label: "Créer un parent" },
   { href: "/admin/create-student", label: "Créer un élève" },
   { href: "/admin/create-staff", label: "Créer un membre du personnel" },
-  { href: "/admin/create-evaluation", label: "Créer une évaluation" }
+  { href: "/admin/create-matiere", label: "Assigner une matière à un professeur" },
+  { href: "/admin/create-evaluation", label: "Créer une évaluation" },
+  { href: "/prof/noter", label: "Noter un élève (professeur)" }
 ];
 
 export default function AdminHomePage() {

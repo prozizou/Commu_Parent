@@ -56,6 +56,15 @@
         ".write": "auth != null && auth.token.staff === true"
       }
     },
+    "matieresEnseignees": {
+      "$matiereId": {
+        // Catalogue des matières par professeur. Lecture ouverte à tout le staff (un
+        // professeur doit pouvoir voir le catalogue pour s'y retrouver), écriture
+        // réservée au Super Admin (c'est lui qui assigne une matière à un professeur).
+        ".read": "auth != null && auth.token.staff === true",
+        ".write": "auth != null && auth.token.staff === true && auth.token.role === 'admin'"
+      }
+    },
     "staff": {
       "$uid": {
         // Une fiche staff (admin/professeur) est lisible par son titulaire et par tout le staff.

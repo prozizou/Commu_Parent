@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const { nom, email, role, ecoleId } = await req.json();
+  const { nom, email, role, ecoleId, classes } = await req.json();
   if (!nom || !email || !role) {
     return NextResponse.json({ error: "Nom, email et rôle sont requis." }, { status: 400 });
   }
@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Rôle invalide (attendu "admin" ou "professeur").' }, { status: 400 });
   }
   const roleStaff = role as StaffRole;
+  const classesEncadrees: string[] = Array.isArray(classes) ? classes.filter((c) => typeof c === "string" && c.trim()) : [];
 
   try {
     const adminAuth = getAdminAuth();
@@ -56,14 +57,24 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    await adminAuth.setCustomUserClaims(userRecord.uid, { staff: true, role: roleStaff, ecoleId: ecoleId || null });
+    await adminAuth.setCustomUserClaims(userRecord.uid, {
+      staff: true,
+      role: roleStaff,
+      ecoleId: ecoleId || null,
+      classes: classesEncadrees
+    });
 
+    // JSON.parse(JSON.stringify(...)) : classesEncadrees vide ([]) serait de toute façon
+    // supprimé au stockage par RTDB (voir lib/performance.ts pour le même comportement
+    // sur sousCompetences) — pas besoin de traitement particulier ici, juste cohérent
+    // avec le reste du code de ne pas s'y fier à la lecture sans repli défensif.
     await adminDb.ref(`staff/${userRecord.uid}`).set({
       uid: userRecord.uid,
       nom,
       email,
       role: roleStaff,
-      ecoleId: ecoleId || null
+      ecoleId: ecoleId || null,
+      classes: classesEncadrees
     });
 
     return NextResponse.json({
