@@ -17,6 +17,7 @@ export default function PerformanceEleve({ params }: { params: { studentId: stri
   const [authPret, setAuthPret] = useState(false);
   const [eleve, setEleve] = useState<Student | null>(null);
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
+  const [evaluationSelectionneeId, setEvaluationSelectionneeId] = useState<string | null>(null);
 
   useEffect(() => onAuthStateChanged(auth, () => setAuthPret(true)), []);
 
@@ -51,6 +52,9 @@ export default function PerformanceEleve({ params }: { params: { studentId: stri
   }
 
   const derniere = evaluations[evaluations.length - 1];
+  const evaluationAffichee = evaluationSelectionneeId
+    ? evaluations.find((e) => e.id === evaluationSelectionneeId) ?? derniere
+    : derniere;
 
   return (
     <main className="min-h-screen px-4 py-8 max-w-xl mx-auto">
@@ -68,7 +72,13 @@ export default function PerformanceEleve({ params }: { params: { studentId: stri
           publiés.
         </p>
       ) : (
-        <ContenuPerformance nomEleve={eleve?.nom ?? ""} evaluations={evaluations} derniere={derniere} />
+        <ContenuPerformance
+          nomEleve={eleve?.nom ?? ""}
+          evaluations={evaluations}
+          evaluationAffichee={evaluationAffichee}
+          estDerniere={evaluationAffichee.id === derniere.id}
+          onSelectionnerEvaluation={setEvaluationSelectionneeId}
+        />
       )}
     </main>
   );
@@ -77,15 +87,23 @@ export default function PerformanceEleve({ params }: { params: { studentId: stri
 function ContenuPerformance({
   nomEleve,
   evaluations,
-  derniere
+  evaluationAffichee,
+  estDerniere,
+  onSelectionnerEvaluation
 }: {
   nomEleve: string;
   evaluations: Evaluation[];
-  derniere: Evaluation;
+  evaluationAffichee: Evaluation;
+  estDerniere: boolean;
+  onSelectionnerEvaluation: (id: string | null) => void;
 }) {
-  const synthese = synthetiserEvaluation(derniere);
+  const synthese = synthetiserEvaluation(evaluationAffichee);
   const bilanDomaines = bilanDomainesToutesMatieres(synthese);
+  // La progression et le graphique d'évolution restent calculés sur l'historique complet,
+  // indépendamment de l'évaluation consultée — ils répondent à "progresse-t-il dans le temps ?",
+  // pas à "comment va cette évaluation-ci en particulier".
   const evolution = analyserEvolution(evaluations.map((e) => ({ session: e.session, score: e.scoreGlobal })));
+  const historique = [...evaluations].reverse(); // plus récente en premier
 
   // Priorité pédagogique : la sous-compétence la plus faible, toutes matières confondues.
   const prioritesParMatiere = synthese.matieres
@@ -100,10 +118,13 @@ function ContenuPerformance({
   return (
     <div className="space-y-8">
       <section className="rounded-lg border border-ink-100 bg-white p-5 text-center">
-        <p className="text-xs text-ink-400 mb-1">{derniere.session}</p>
+        <p className="text-xs text-ink-400 mb-1">
+          {evaluationAffichee.session}
+          {!estDerniere && <span className="text-accent"> (évaluation passée)</span>}
+        </p>
         <p className="font-display text-4xl text-ink-900">{synthese.scoreGlobal}</p>
         <p className="text-xs text-ink-400 mb-2">
-          sur {derniere.bareme.max} (barème {derniere.bareme.min}–{derniere.bareme.max})
+          sur {evaluationAffichee.bareme.max} (barème {evaluationAffichee.bareme.min}–{evaluationAffichee.bareme.max})
         </p>
         <NiveauBadge niveau={synthese.niveau} />
         <div className="mt-4">
@@ -113,7 +134,7 @@ function ContenuPerformance({
               import("@/lib/bulletinPdf").then(({ genererBulletinPdf }) =>
                 genererBulletinPdf({
                   nomEleve,
-                  session: derniere.session,
+                  session: evaluationAffichee.session,
                   synthese,
                   evolution,
                   prioritePedagogique: prioriteGlobale
@@ -200,6 +221,44 @@ function ContenuPerformance({
               </li>
             ))}
           </ul>
+        </section>
+      )}
+
+      {historique.length > 1 && (
+        <section>
+          <h2 className="text-sm font-medium text-ink-600 mb-2">🕒 Historique des évaluations</h2>
+          <ul className="divide-y divide-ink-100 rounded-lg border border-ink-100 bg-white overflow-hidden">
+            {historique.map((e) => {
+              const active = e.id === evaluationAffichee.id;
+              return (
+                <li key={e.id}>
+                  <button
+                    type="button"
+                    onClick={() => onSelectionnerEvaluation(active ? null : e.id)}
+                    className={`w-full flex items-center justify-between px-4 py-3 text-left transition-colors ${
+                      active ? "bg-accent/10" : "hover:bg-ink-50"
+                    }`}
+                  >
+                    <span className={`text-sm ${active ? "text-ink-900 font-medium" : "text-ink-800"}`}>
+                      {e.session}
+                    </span>
+                    <span className="text-sm text-ink-400 tabular-nums">
+                      {e.scoreGlobal} / {e.bareme.max}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+          {!estDerniere && (
+            <button
+              type="button"
+              onClick={() => onSelectionnerEvaluation(null)}
+              className="text-xs text-accent underline mt-2"
+            >
+              Revenir à la dernière évaluation
+            </button>
+          )}
         </section>
       )}
     </div>
