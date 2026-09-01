@@ -42,7 +42,10 @@
         // Même logique d'accès que students/$studentId : le staff voit tout,
         // un parent ne voit que les évaluations de ses propres enfants.
         ".read": "auth != null && (auth.token.staff === true || root.child('students').child($studentId).child('parentIds').child(auth.token.parentId).exists())",
-        ".write": "auth != null && auth.token.staff === true"
+        ".write": "auth != null && auth.token.staff === true",
+        // Requis par la requête orderByChild("createdAt") utilisée sur
+        // /performance/[studentId] (tri chronologique des évaluations d'un élève).
+        ".indexOn": "createdAt"
       }
     },
     "groups": {
