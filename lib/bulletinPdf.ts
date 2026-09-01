@@ -13,8 +13,9 @@ export function genererBulletinPdf(params: {
   session: string;
   synthese: SyntheseEvaluation;
   evolution?: BilanEvolution | null;
+  prioritePedagogique?: { nom: string; matiere: string; pourcentage: number; recommandation: string } | null;
 }) {
-  const { nomEleve, session, synthese, evolution } = params;
+  const { nomEleve, session, synthese, evolution, prioritePedagogique } = params;
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const margeGauche = 20;
   const largeurUtile = 170;
@@ -114,6 +115,23 @@ export function genererBulletinPdf(params: {
       doc.text(`• ${d.nom}`, margeGauche, y);
       y += 5.5;
     }
+    y += 4;
+  }
+
+  // Priorité pédagogique (sous-compétence la plus faible, toutes matières confondues)
+  if (prioritePedagogique) {
+    ligneSection(y);
+    y += 10;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("Priorité pédagogique", margeGauche, y);
+    y += 6;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text(`${prioritePedagogique.nom} (${prioritePedagogique.matiere} · ${prioritePedagogique.pourcentage}%)`, margeGauche, y);
+    y += 6;
+    const recommandationLignes = doc.splitTextToSize(prioritePedagogique.recommandation, largeurUtile);
+    doc.text(recommandationLignes, margeGauche, y);
   }
 
   // Pied de page
