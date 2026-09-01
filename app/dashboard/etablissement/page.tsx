@@ -95,6 +95,26 @@ function ContenuEtablissement({ getToken }: { getToken: () => Promise<string> })
         <p className="text-sm text-ink-400">Aucune évaluation pour cette session.</p>
       ) : (
         <>
+          <button
+            type="button"
+            onClick={() =>
+              import("@/lib/exportExcel").then(({ exporterEtablissementExcel }) =>
+                exporterEtablissementExcel({
+                  session: data.session,
+                  studentCount: data.studentCount,
+                  moyenne: data.moyenne,
+                  distribution: data.distribution,
+                  domainesForts: data.domainesForts.map((d) => ({ nom: d.nom, pourcentage: d.pourcentage })),
+                  domainesFaibles: data.domainesFaibles.map((d) => ({ nom: d.nom, pourcentage: d.pourcentage })),
+                  evolution: data.evolution
+                })
+              )
+            }
+            className="text-xs text-accent underline"
+          >
+            Exporter en Excel
+          </button>
+
           <section className="flex gap-8 rounded-lg border border-ink-100 bg-white p-5">
             <div>
               <p className="font-display text-3xl text-ink-900">{data.moyenne}</p>
