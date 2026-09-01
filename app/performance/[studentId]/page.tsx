@@ -67,13 +67,21 @@ export default function PerformanceEleve({ params }: { params: { studentId: stri
           publiés.
         </p>
       ) : (
-        <ContenuPerformance evaluations={evaluations} derniere={derniere} />
+        <ContenuPerformance nomEleve={eleve?.nom ?? ""} evaluations={evaluations} derniere={derniere} />
       )}
     </main>
   );
 }
 
-function ContenuPerformance({ evaluations, derniere }: { evaluations: Evaluation[]; derniere: Evaluation }) {
+function ContenuPerformance({
+  nomEleve,
+  evaluations,
+  derniere
+}: {
+  nomEleve: string;
+  evaluations: Evaluation[];
+  derniere: Evaluation;
+}) {
   const synthese = synthetiserEvaluation(derniere);
   const bilanDomaines = bilanDomainesToutesMatieres(synthese);
   const evolution = analyserEvolution(evaluations.map((e) => ({ session: e.session, score: e.scoreGlobal })));
@@ -87,6 +95,19 @@ function ContenuPerformance({ evaluations, derniere }: { evaluations: Evaluation
           sur {derniere.bareme.max} (barème {derniere.bareme.min}–{derniere.bareme.max})
         </p>
         <NiveauBadge niveau={synthese.niveau} />
+        <div className="mt-4">
+          <button
+            type="button"
+            onClick={() =>
+              import("@/lib/bulletinPdf").then(({ genererBulletinPdf }) =>
+                genererBulletinPdf({ nomEleve, session: derniere.session, synthese, evolution })
+              )
+            }
+            className="text-xs text-accent underline"
+          >
+            Télécharger le bulletin (PDF)
+          </button>
+        </div>
       </section>
 
       <section>
