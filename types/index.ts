@@ -84,7 +84,12 @@ export type DomaineResult = {
   id: string;
   nom: string;
   score?: number; // score agrégé du domaine, sur le même barème que la matière
-  sousCompetences: SousCompetenceResult[];
+  // Optionnel en pratique : RTDB ne stocke pas les tableaux vides, donc un domaine
+  // sans sous-compétences saisies (juste un score agrégé) revient sans cette clé du
+  // tout à la lecture, malgré un `[]` explicite à l'écriture. Voir totalDomaine,
+  // itemsSousCompetences et synthetiserEvaluation dans lib/performance.ts pour le
+  // repli défensif correspondant.
+  sousCompetences?: SousCompetenceResult[];
 };
 
 export type MatiereResult = {

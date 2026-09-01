@@ -70,7 +70,10 @@ export function niveauPerformance(
 
 /** Total points obtenus / possibles d'un domaine, à partir de ses sous-compétences. */
 export function totalDomaine(domaine: DomaineResult): { obtenus: number; possibles: number } {
-  return domaine.sousCompetences.reduce(
+  // RTDB ne stocke pas les tableaux vides : un domaine sans détail de sous-compétences
+  // (juste un score agrégé, cf. section 2 du cahier des charges) revient avec
+  // `sousCompetences === undefined` à la lecture, pas `[]`. D'où le repli défensif.
+  return (domaine.sousCompetences ?? []).reduce(
     (acc, sc) => ({ obtenus: acc.obtenus + sc.pointsObtenus, possibles: acc.possibles + sc.pointsPossibles }),
     { obtenus: 0, possibles: 0 }
   );
@@ -130,7 +133,7 @@ export function identifierForcesEtDifficultes(
 
 /** Construit la liste des `ItemEvalue` pour toutes les sous-compétences d'un domaine. */
 export function itemsSousCompetences(domaine: DomaineResult): ItemEvalue[] {
-  return domaine.sousCompetences.map((sc) => ({
+  return (domaine.sousCompetences ?? []).map((sc) => ({
     id: sc.id,
     nom: sc.nom,
     pourcentage: pourcentage(sc.pointsObtenus, sc.pointsPossibles)
@@ -276,7 +279,7 @@ export function synthetiserEvaluation(evaluation: Evaluation): SyntheseEvaluatio
       id: domaine.id,
       nom: domaine.nom,
       pourcentage: pourcentageDomaine(domaine, bareme),
-      sousCompetences: domaine.sousCompetences.map((sc) => ({ ...sc, pourcentage: pourcentage(sc.pointsObtenus, sc.pointsPossibles) }))
+      sousCompetences: (domaine.sousCompetences ?? []).map((sc) => ({ ...sc, pourcentage: pourcentage(sc.pointsObtenus, sc.pointsPossibles) }))
     }));
 
     const comparaisonBrute = evaluation.comparaisons?.[matiere.id];
