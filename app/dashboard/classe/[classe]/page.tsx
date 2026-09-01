@@ -104,6 +104,25 @@ function ContenuClasse({ classe, getToken }: { classe: string; getToken: () => P
         </p>
       )}
 
+      {data.eleves.length > 0 && (
+        <button
+          type="button"
+          onClick={() =>
+            import("@/lib/exportExcel").then(({ exporterClasseExcel }) =>
+              exporterClasseExcel({
+                classe: data.classe,
+                session: data.session,
+                moyenneClasse: data.moyenneClasse,
+                eleves: data.eleves
+              })
+            )
+          }
+          className="text-xs text-accent underline"
+        >
+          Exporter en Excel
+        </button>
+      )}
+
       {data.eleves.length === 0 ? (
         <p className="text-sm text-ink-400">Aucun élève trouvé pour cette classe.</p>
       ) : (
