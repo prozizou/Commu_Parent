@@ -7,7 +7,8 @@ import Link from "next/link";
 import { onAuthStateChanged } from "firebase/auth";
 import { ref, onValue, query, orderByChild } from "firebase/database";
 import { auth, rtdb } from "@/lib/firebase";
-import { analyserEvolution, bilanDomainesToutesMatieres, synthetiserEvaluation } from "@/lib/performance";
+import { analyserEvolution, bilanDomainesToutesMatieres, prioritePedagogique, synthetiserEvaluation } from "@/lib/performance";
+import { genererRecommandation } from "@/lib/recommandations";
 import { BarrePourcentage, NiveauBadge } from "@/components/PerformanceUI";
 import type { Evaluation, Student } from "@/types";
 
@@ -86,6 +87,16 @@ function ContenuPerformance({
   const bilanDomaines = bilanDomainesToutesMatieres(synthese);
   const evolution = analyserEvolution(evaluations.map((e) => ({ session: e.session, score: e.scoreGlobal })));
 
+  // Priorité pédagogique : la sous-compétence la plus faible, toutes matières confondues.
+  const prioritesParMatiere = synthese.matieres
+    .map((m) => ({ matiere: m.nom, priorite: prioritePedagogique(m) }))
+    .filter((p): p is { matiere: string; priorite: NonNullable<ReturnType<typeof prioritePedagogique>> } => p.priorite !== null);
+  const prioriteGlobale =
+    prioritesParMatiere.length > 0
+      ? prioritesParMatiere.reduce((pire, p) => (p.priorite.pourcentage < pire.priorite.pourcentage ? p : pire))
+      : null;
+  const recommandation = prioriteGlobale ? genererRecommandation(prioriteGlobale.priorite.nom) : null;
+
   return (
     <div className="space-y-8">
       <section className="rounded-lg border border-ink-100 bg-white p-5 text-center">
@@ -100,7 +111,20 @@ function ContenuPerformance({
             type="button"
             onClick={() =>
               import("@/lib/bulletinPdf").then(({ genererBulletinPdf }) =>
-                genererBulletinPdf({ nomEleve, session: derniere.session, synthese, evolution })
+                genererBulletinPdf({
+                  nomEleve,
+                  session: derniere.session,
+                  synthese,
+                  evolution,
+                  prioritePedagogique: prioriteGlobale
+                    ? {
+                        nom: prioriteGlobale.priorite.nom,
+                        matiere: prioriteGlobale.matiere,
+                        pourcentage: prioriteGlobale.priorite.pourcentage,
+                        recommandation: recommandation!.texte
+                      }
+                    : null
+                })
               )
             }
             className="text-xs text-accent underline"
@@ -152,6 +176,27 @@ function ContenuPerformance({
             {[...bilanDomaines.priorites, ...bilanDomaines.aRenforcer].slice(0, 4).map((f) => (
               <li key={f.id} className="text-sm text-ink-800">
                 {f.nom}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {prioriteGlobale && recommandation && (
+        <section className="rounded-lg border border-accent/30 bg-accent/5 p-4">
+          <h2 className="text-sm font-medium text-ink-600 mb-1">💡 Priorité pédagogique</h2>
+          <p className="text-sm text-ink-900 font-medium mb-1">
+            {prioriteGlobale.priorite.nom}{" "}
+            <span className="text-ink-400 font-normal">
+              ({prioriteGlobale.matiere} · {prioriteGlobale.priorite.pourcentage}%)
+            </span>
+          </p>
+          <p className="text-sm text-ink-800 mb-3">{recommandation.texte}</p>
+          <p className="text-xs text-ink-400 mb-1.5">Pistes d'exercices</p>
+          <ul className="space-y-1">
+            {recommandation.suggestions.map((s, i) => (
+              <li key={i} className="text-sm text-ink-800">
+                • {s}
               </li>
             ))}
           </ul>
