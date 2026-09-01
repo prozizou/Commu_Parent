@@ -15,6 +15,7 @@ export default function CreateStaffAdminPage() {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<StaffRole>("professeur");
   const [ecoleId, setEcoleId] = useState("");
+  const [classes, setClasses] = useState("");
   const [loading, setLoading] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
   const [resultat, setResultat] = useState<{ email: string; motDePasse: string | null } | null>(null);
@@ -45,7 +46,13 @@ export default function CreateStaffAdminPage() {
       const res = await fetch("/api/admin/create-staff", {
         method: "POST",
         headers,
-        body: JSON.stringify({ nom, email, role, ecoleId })
+        body: JSON.stringify({
+          nom,
+          email,
+          role,
+          ecoleId,
+          classes: role === "professeur" ? classes.split(",").map((c) => c.trim()).filter(Boolean) : []
+        })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Erreur lors de la création.");
@@ -53,6 +60,7 @@ export default function CreateStaffAdminPage() {
       setNom("");
       setEmail("");
       setEcoleId("");
+      setClasses("");
     } catch (err: any) {
       setErreur(err.message);
     } finally {
@@ -142,6 +150,20 @@ export default function CreateStaffAdminPage() {
             className="w-full rounded-md border border-ink-100 px-3 py-2 focus:border-accent"
           />
         </div>
+
+        {role === "professeur" && (
+          <div>
+            <label className="block text-sm text-ink-600 mb-1">Classes encadrées</label>
+            <input
+              type="text"
+              value={classes}
+              onChange={(e) => setClasses(e.target.value)}
+              placeholder="ex: CM1, CM2-A"
+              className="w-full rounded-md border border-ink-100 px-3 py-2 focus:border-accent"
+            />
+            <p className="text-xs text-ink-400 mt-1">Séparées par des virgules. Détermine quels élèves ce professeur pourra noter.</p>
+          </div>
+        )}
 
         {erreur && <p className="text-sm text-red-600">{erreur}</p>}
 

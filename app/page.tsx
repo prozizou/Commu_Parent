@@ -25,7 +25,9 @@ const LIENS = [
   { href: "/admin/create-parent", label: "Créer un parent" },
   { href: "/admin/create-student", label: "Créer un élève" },
   { href: "/admin/create-staff", label: "Créer un professeur" },
-  { href: "/admin/create-evaluation", label: "Créer une évaluation" }
+  { href: "/admin/create-matiere", label: "Assigner une matière" },
+  { href: "/admin/create-evaluation", label: "Créer une évaluation" },
+  { href: "/prof/noter", label: "Noter un élève" }
 ];
 
 const LIBELLES_NIVEAU: Record<string, string> = {

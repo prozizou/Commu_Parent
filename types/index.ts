@@ -58,6 +58,22 @@ export type Staff = {
   email: string;
   role: StaffRole;
   ecoleId: string;
+  // Classes encadrées par ce professeur (ex: ["CM1", "CM2-A"]) — détermine quels élèves
+  // il peut noter. Non pertinent pour un rôle "admin" (accès à tout l'établissement).
+  classes?: string[];
+};
+
+/**
+ * Une matière enseignée, rattachée à UN professeur (voir demande : "les matières seront
+ * ajoutées selon le professeur"). Distincte de MatiereResult (le résultat chiffré d'une
+ * matière dans une évaluation) : ceci est le catalogue "qui enseigne quoi", MatiereResult
+ * est la note elle-même.
+ */
+export type MatiereEnseignee = {
+  id: string;
+  nom: string;
+  professeurId: string; // Staff.uid
+  ecoleId: string | null;
 };
 
 /* ------------------------------------------------------------------ */
